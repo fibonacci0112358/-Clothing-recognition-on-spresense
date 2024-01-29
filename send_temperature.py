@@ -3,7 +3,7 @@ import time
 import requests
 from datetime import datetime
 
-city_code = "270000" # 大阪のcityコード
+city_code = "130010" #稚内のcityコード:011000 東京のcityコード:130010 那覇のcityコード:471010
 url = "https://weather.tsukumijima.net/api/forecast/city/" + city_code
 
 def get_temperature():
@@ -21,7 +21,7 @@ def get_temperature():
         # 今日の最低気温は取得できないので、明日の最低気温を取得
         min_temp = weather_json['forecasts'][1]['temperature']['min']['celsius']
         print("最高気温 {} 最低気温 {}".format(max_temp, min_temp))
-        return str((int(max_temp) + int(min_temp)) / 2)
+        return str((int(max_temp) + int(min_temp)) // 2) # 平均気温を整数値の文字列で返す
 
 def main():
     port = "COM5" # ポート番号
@@ -31,23 +31,12 @@ def main():
         # シリアルポートを開く
         ser = serial.Serial(port, baudrate,timeout=0.8) # timeoutは受信したときの待ち時間
         
-        # 何かしらでループを終了させる処理が必要!!!!!!!
         while True:
-            # a += 1
-            # b = str(a).encode('ascii')
-            # ser.write(b)
-            # print(f"send: {a}")
-            # time.sleep(1)
-            # data = ser.readline().decode().strip() # 1秒間で受信した文字列をすべて読み込む
-            # print(f"Received: {data}")
-            
-            # シリアルの受信を待つ場合 
-            # 加えてspresense側で認識結果をスタックしてより正確な認識結果を取得する
+            # シリアルを受信するとAPIから気温を取得し、シリアル送信
             if ser.in_waiting > 0: # 受信バッファにデータがある場合
-                data = ser.readline().decode().strip() # 受信した文字列をすべて読み込む
-                print(f"Received: {data}")
+                data = ser.readline().decode().strip()
+                print(f"Received: {data}") # 1:T-shirt 2:PullOver 3:Coat
                 ser.write(get_temperature().encode('ascii'))
-                time.sleep(5)
 
     except serial.SerialException as e:
         print(f"Serial Exception: {e}")

@@ -45,9 +45,6 @@ void CamCB(CamImage img) {
     Serial.println("Image is not available. Try again");
     return;
   }
-  display.fillRect(0,0, 48, 224, filling_color);
-  display.fillRect(272,0, 320, 224, filling_color);
-
   // カメラ画像の切り抜きと縮小
   CamImage small;
   CamErr err = img.clipAndResizeImageByHW(small
@@ -73,16 +70,17 @@ void CamCB(CamImage img) {
   
   gStrResult = "Detecting : " + label[cloth];
   
-  // 認識結果が連続で同じ場合にシリアル通信で送信
+  // 認識結果が連続で同じ場合にシリアル通信で送信（誤検出防止）
   if(cloth == prev_class && cloth != 0){
     same_count++;
   }else{
     same_count = 0;
   }
-  if(same_count > 10){
+  if(same_count > 20){
+    // pythonにserial送信
     Serial.println(cloth);
     same_count = 0;
-    // python側の処理が終わるまで待つ
+    // python側の送信処理が終わるまで待つ
     delay(2000);
     //気温の呼び出し
     temperature = Serial.readString().toInt();
@@ -129,7 +127,7 @@ void CamCB(CamImage img) {
     
   img.convertPixFormat(CAM_IMAGE_PIX_FMT_RGB565);
   uint16_t* imgBuf = (uint16_t*)img.getImgBuff();
-  drawBox(imgBuf, OFFSET_X, OFFSET_Y, CLIP_WIDTH, CLIP_HEIGHT, 5, ILI9341_WHITE); 
+  drawBox(imgBuf, OFFSET_X, OFFSET_Y, CLIP_WIDTH, CLIP_HEIGHT, 5, filling_color); 
   display.drawRGBBitmap(0, 0, (uint16_t*)imgBuf, 320, 224);
   putStringOnLcd(gStrResult, ILI9341_YELLOW);
 }
@@ -144,11 +142,9 @@ void setup() {
   }
   
   int ret = 0;
-  
-  
   // SDカードにある学習済モデルの読み込み
   File nnbfile = SD.open("model.nnb");
-  ret = dnnrt.begin(nnbfile,4); // SubCore4つを認識に使う
+  ret = dnnrt.begin(nnbfile);
   if (ret < 0) {
     return;
   }
