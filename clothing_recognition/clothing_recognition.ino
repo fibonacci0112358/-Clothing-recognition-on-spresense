@@ -6,38 +6,32 @@
 
 #define TFT_DC  9
 #define TFT_CS  10
-Adafruit_ILI9341 display = Adafruit_ILI9341(TFT_CS, TFT_DC);
-
-// カメラ画像をクリッピングする範囲
 #define OFFSET_X  (48)
 #define OFFSET_Y  (0)
 #define CLIP_WIDTH (224)
 #define CLIP_HEIGHT (224)
 #define DNN_WIDTH  (28)
 #define DNN_HEIGHT  (28)
-
-//クラス数
 #define N 4
+
 SDClass SD;
 DNNRT dnnrt;
 BmpImage bmp;
-char fname[16];
 DNNVariable input(DNN_WIDTH*DNN_HEIGHT);
-byte interval = 0;
+Adafruit_ILI9341 display = Adafruit_ILI9341(TFT_CS, TFT_DC);
 const String label[N] = {"None","T-shirt","Pullover","Coat"};
 // ディスプレイに書き込むテキスト
 String gStrResult;
 int filling_color = ILI9341_BLACK;
-
-uint64_t time_st;
 // 認識結果が連続で同じ場合にカウントする
 int same_count = 0;
 // 前回のクラスを保存する変数
 int prev_class = -1;
 int temperature;
-
-const int threshold1_2 = 20; // 1:T-shirtと2:Pulloverの境界値
-const int threshold2_3 = 10; // 2:Pulloverと3:Coatの境界値
+// 1:T-shirtと2:Pulloverの境界値
+const int threshold1_2 = 20;
+// 2:Pulloverと3:Coatの境界値
+const int threshold2_3 = 10;
 
 // cameraのstreamingのコールバック関数
 void CamCB(CamImage img) {
@@ -67,7 +61,6 @@ void CamCB(CamImage img) {
   DNNVariable output = dnnrt.outputVariable(0);
   //　確率最大のクラス
   int cloth = output.maxIndex();
-  
   gStrResult = "Detecting : " + label[cloth];
   
   // 認識結果が連続で同じ場合にシリアル通信で送信（誤検出防止）
@@ -87,36 +80,29 @@ void CamCB(CamImage img) {
     //結果の表示
     if(cloth==1){
       if(temperature >= threshold1_2){
-        //good
         filling_color = ILI9341_GREEN;
       }
       else{
-        //cold;
         filling_color = ILI9341_BLUE;
       }
     }
     else if(cloth==2){
       if(temperature >= threshold1_2){
-        //hot;
         filling_color = ILI9341_RED;
       }
       else if(temperature >= threshold2_3){
-        //good
         filling_color = ILI9341_GREEN;
       }
       else{
-        //cold;
         filling_color = ILI9341_BLUE;
       }
     
     }
     else if(cloth==3){
       if(temperature >= threshold2_3){
-        //hot;
         filling_color = ILI9341_RED;
       }
       else{
-        //good
         filling_color = ILI9341_GREEN;
       }
     }

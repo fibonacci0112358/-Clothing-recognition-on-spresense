@@ -17,7 +17,7 @@ def get_temperature():
     else:
         weather_json = response.json()
         # 2番目の要素 0:今日 1:明日 2:明後日
-        max_temp = weather_json['forecasts'][1]['temperature']['max']['celsius']
+        max_temp = weather_json['forecasts'][0]['temperature']['max']['celsius']
         # 今日の最低気温は取得できないので、明日の最低気温を取得
         min_temp = weather_json['forecasts'][1]['temperature']['min']['celsius']
         print("最高気温 {} 最低気温 {}".format(max_temp, min_temp))

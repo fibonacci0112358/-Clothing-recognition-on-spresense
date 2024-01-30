@@ -1,21 +1,3 @@
-/*
- *  image_collection.ino - Image Capture sketch for making an image dataset
- *  Copyright 2022 Sony Semiconductor Solutions Corporation
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
- */
 #include <Camera.h>
 #include <Adafruit_ILI9341.h>
 #include <SDHCI.h>
@@ -23,8 +5,6 @@
 
 #define TFT_DC  9
 #define TFT_CS  10
-Adafruit_ILI9341 display = Adafruit_ILI9341(TFT_CS, TFT_DC);
-
 #define OFFSET_X  (48)
 #define OFFSET_Y  (0)
 #define CLIP_WIDTH (224)
@@ -32,20 +12,10 @@ Adafruit_ILI9341 display = Adafruit_ILI9341(TFT_CS, TFT_DC);
 #define DNN_WIDTH  (28)
 #define DNN_HEIGHT  (28)
 
+Adafruit_ILI9341 display = Adafruit_ILI9341(TFT_CS, TFT_DC);
 SDClass SD;
 BmpImage bmp;
 char fname[16];
-
-
-// ボタン用ピンの定義
-// 学習キットを使用している場合はボタン番号を取り扱い説明書で確認してください
-#define BUTTON 0
-
-// ボタン押下時に呼ばれる割り込み関数
-bool bButtonPressed = false;
-void changeState() {
-  bButtonPressed = true;
-}
 
 // 画像データの保存用関数 
 void saveGrayBmpImage(int width, int height, uint8_t* grayImg) 
@@ -74,7 +44,6 @@ void saveGrayBmpImage(int width, int height, uint8_t* grayImg)
   Serial.println("Saved an image as " + String(fname));
 }
 
-
 void CamCB(CamImage img) {
 
   if (!img.isAvailable()) {
@@ -102,12 +71,9 @@ void CamCB(CamImage img) {
     grayImg[n] = (uint8_t)(((imgbuf[n] & 0xf000) >> 8) 
                          | ((imgbuf[n] & 0x00f0) >> 4));
   }
-
-  // ボタンが押されたら画像を保存
-
-    // 学習データを保存
+  // 学習データを保存
   saveGrayBmpImage(DNN_WIDTH, DNN_HEIGHT, grayImg);
-    // ファイル名をディスプレイ表示
+  // ファイル名をディスプレイ表示
   putStringOnLcd(String(fname), ILI9341_GREEN);   
 
   // 処理結果のディスプレイ表示
@@ -119,15 +85,12 @@ void CamCB(CamImage img) {
   delay(10);
 }
 
-
 void setup() {   
   Serial.begin(115200);
   display.begin();
   theCamera.begin();
   display.setRotation(3);
   theCamera.startStreaming(true, CamCB);
-
-//  attachInterrupt(digitalPinToInterrupt(BUTTON), changeState, FALLING);
   while (!SD.begin()) { 
     putStringOnLcd("Insert SD card", ILI9341_RED); 
   }
